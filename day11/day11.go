@@ -8,16 +8,20 @@ import (
 )
 
 const (
-	EMPTY    = "L"
-	OCCUPIED = "#"
-	FLOOR    = "."
+	EMPTY     = "L"
+	OCCUPIED  = "#"
+	FLOOR     = "."
+	TOLERANCE = 5
+	DEBUG     = false
 )
 
 func main() {
 	state := readInitialState()
+	printState(state)
 	stateChange := true
 	for stateChange {
 		state, stateChange = updateState(state)
+		printState(state)
 	}
 	numOccupied := getNumOccupied(state)
 	fmt.Println(numOccupied)
@@ -33,6 +37,19 @@ func getNumOccupied(state [][]string) int {
 		}
 	}
 	return numOccupied
+}
+
+func printState(state [][]string) {
+	if !DEBUG {
+		return
+	}
+	for _, line := range state {
+		for _, c := range line {
+			fmt.Print(c)
+		}
+		fmt.Println()
+	}
+	fmt.Println()
 }
 
 func readInitialState() [][]string {
@@ -66,12 +83,10 @@ func updateState(previousState [][]string) ([][]string, bool) {
 		newLine := []string{}
 		for curCol, c := range line {
 			numAdj := getNumAdjacentOccupied(previousState, curRow, curCol, numRows, numCols)
-			if c == FLOOR {
-				newLine = append(newLine, FLOOR)
-			} else if c == EMPTY && numAdj == 0 {
+			if c == EMPTY && numAdj == 0 {
 				newLine = append(newLine, OCCUPIED)
 				stateChanged = true
-			} else if c == OCCUPIED && numAdj > 3 {
+			} else if c == OCCUPIED && numAdj >= TOLERANCE {
 				newLine = append(newLine, EMPTY)
 				stateChanged = true
 			} else {
@@ -83,49 +98,83 @@ func updateState(previousState [][]string) ([][]string, bool) {
 	return newState, stateChanged
 }
 
-/**
- * i - current row
- * j - current col
- * m - row length
- * n - col length
- */
 func getNumAdjacentOccupied(state [][]string, curRow int, curCol int, numRows int, numCols int) int {
 	total := 0
-	left := curCol - 1
-	right := curCol + 1
-	top := curRow - 1
-	bottom := curRow + 1
+	defaultLeft := curCol - 1
+	defaultRight := curCol + 1
+	defaultTop := curRow - 1
+	defaultBottom := curRow + 1
 	// Top Left
-	if left >= 0 && top >= 0 && state[top][left] == OCCUPIED {
-		total++
+	for left, top := defaultLeft, defaultTop; left >= 0 && top >= 0; left, top = left-1, top-1 {
+		if state[top][left] == OCCUPIED {
+			total++
+			break
+		} else if state[top][left] == EMPTY {
+			break
+		}
 	}
 	// Top
-	if top >= 0 && state[top][curCol] == OCCUPIED {
-		total++
+	for top := defaultTop; top >= 0; top-- {
+		if state[top][curCol] == OCCUPIED {
+			total++
+			break
+		} else if state[top][curCol] == EMPTY {
+			break
+		}
 	}
 	// Top Right
-	if right < numCols && top >= 0 && state[top][right] == OCCUPIED {
-		total++
+	for top, right := defaultTop, defaultRight; top >= 0 && right < numCols; top, right = top-1, right+1 {
+		if state[top][right] == OCCUPIED {
+			total++
+			break
+		} else if state[top][right] == EMPTY {
+			break
+		}
 	}
 	// Right
-	if right < numCols && state[curRow][right] == OCCUPIED {
-		total++
+	for right := defaultRight; right < numCols; right++ {
+		if state[curRow][right] == OCCUPIED {
+			total++
+			break
+		} else if state[curRow][right] == EMPTY {
+			break
+		}
 	}
 	// Bottom Right
-	if right < numCols && bottom < numRows && state[bottom][right] == OCCUPIED {
-		total++
+	for bottom, right := defaultBottom, defaultRight; right < numCols && bottom < numRows; bottom, right = bottom+1, right+1 {
+		if state[bottom][right] == OCCUPIED {
+			total++
+			break
+		} else if state[bottom][right] == EMPTY {
+			break
+		}
 	}
 	// Bottom
-	if bottom < numRows && state[bottom][curCol] == OCCUPIED {
-		total++
+	for bottom := defaultBottom; bottom < numRows; bottom++ {
+		if state[bottom][curCol] == OCCUPIED {
+			total++
+			break
+		} else if state[bottom][curCol] == EMPTY {
+			break
+		}
 	}
 	// Bottom Left
-	if left >= 0 && bottom < numRows && state[bottom][left] == OCCUPIED {
-		total++
+	for bottom, left := defaultBottom, defaultLeft; left >= 0 && bottom < numRows; bottom, left = bottom+1, left-1 {
+		if state[bottom][left] == OCCUPIED {
+			total++
+			break
+		} else if state[bottom][left] == EMPTY {
+			break
+		}
 	}
 	// Left
-	if left >= 0 && state[curRow][left] == OCCUPIED {
-		total++
+	for left := defaultLeft; left >= 0; left-- {
+		if state[curRow][left] == OCCUPIED {
+			total++
+			break
+		} else if state[curRow][left] == EMPTY {
+			break
+		}
 	}
 	return total
 }
