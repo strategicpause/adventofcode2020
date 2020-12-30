@@ -13,23 +13,27 @@ const (
 	Debug     = true
 )
 
-type Vector3 struct {
+type Vector struct {
 	X int
 	Y int
 	Z int
+	W int
 }
 
-func (v Vector3) getNeighbors() []Vector3 {
-	neighbors := []Vector3{}
+func (v Vector) getNeighbors() []Vector {
+	neighbors := []Vector{}
 	for i := -1; i <= 1; i++ {
 		for j := -1; j <= 1; j++ {
 			for k := -1; k <= 1; k++ {
-				if !(i == 0 && j == 0 && k == 0) {
-					vector := Vector3{}
-					vector.X = v.X + k
-					vector.Y = v.Y + j
-					vector.Z = v.Z + i
-					neighbors = append(neighbors, vector)
+				for l := -1; l <= 1; l++ {
+					if !(i == 0 && j == 0 && k == 0 && l == 0) {
+						vector := Vector{}
+						vector.X = v.X + k
+						vector.Y = v.Y + j
+						vector.Z = v.Z + i
+						vector.W = v.W + l
+						neighbors = append(neighbors, vector)
+					}
 				}
 			}
 		}
@@ -37,11 +41,11 @@ func (v Vector3) getNeighbors() []Vector3 {
 	return neighbors
 }
 
-func (v Vector3) string() string {
-	return fmt.Sprintf("X: %d, Y: %d, Z: %d", v.X, v.Y, v.Z)
+func (v Vector) string() string {
+	return fmt.Sprintf("X: %d, Y: %d, Z: %d, W: %d", v.X, v.Y, v.Z, v.W)
 }
 
-type State map[Vector3]bool
+type State map[Vector]bool
 
 func (s State) Cycle() State {
 	// Create map which includes all active values and inactive neighbors of those values.
@@ -118,7 +122,7 @@ func getInitialState() State {
 	for y, line := range inputState {
 		for x, char := range line {
 			if char != Active {
-				vector := Vector3{X: x, Y: y, Z: 0}
+				vector := Vector{X: x, Y: y, Z: 0, W: 0}
 				state[vector] = true
 			}
 		}
