@@ -80,7 +80,7 @@ func evaluateExpression(line string) int {
 		if c == " " {
 			continue
 		} else if c == "+" || c == "*" {
-			if !operatorStack.IsEmpty() && (operatorStack.Peek() == "+" || operatorStack.Peek() == "*") {
+			if !operatorStack.IsEmpty() && (operatorStack.Peek() == "+") {
 				operator := operatorStack.Pop()
 				outputQueue.Push(operator)
 			}
