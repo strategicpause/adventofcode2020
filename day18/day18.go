@@ -8,30 +8,43 @@ import (
 	"strings"
 )
 
-type Stack struct {
+type List struct {
 	arr []string
 }
 
-func (s *Stack) Push(e string) {
+func (s *List) Push(e string) {
 	s.arr = append(s.arr, e)
 }
 
-func (s *Stack) Pop() string {
+func (s *List) Pop() string {
 	n := len(s.arr) - 1
+	if n < 0 {
+		panic("No elements.")
+	}
 	e := s.arr[n]
 	s.arr = s.arr[:n]
 	return e
 }
 
-func (s *Stack) Peek() string {
+func (s *List) Dequeue() string {
+	n := len(s.arr)
+	if n == 0 {
+		panic("No elements")
+	}
+	e := s.arr[0]
+	s.arr = s.arr[1:]
+	return e
+}
+
+func (s *List) Peek() string {
 	n := len(s.arr) - 1
 	if n < 0 {
-		return ""
+		panic("No elements.")
 	}
 	return s.arr[n]
 }
 
-func (s *Stack) Empty() bool {
+func (s *List) IsEmpty() bool {
 	return len(s.arr) == 0
 }
 
@@ -40,9 +53,7 @@ func main() {
 	total := 0
 	for scanner.Scan() {
 		line := scanner.Text()
-		fmt.Println(line)
 		value := evaluateExpression(line)
-		fmt.Println(value)
 		total += value
 	}
 	fmt.Println(total)
@@ -61,44 +72,54 @@ func getScanner() *bufio.Scanner {
 }
 
 func evaluateExpression(line string) int {
-	stack := Stack{}
 	input := strings.Split(line, " ")
+	outputQueue := List{}
+	operatorStack := List{}
+
 	for _, c := range input {
-		if c == "*" || c == "+" || c == "(" {
-			stack.Push(c)
-		} else if c == ")" {
-			temp := stack.Pop()
-			stack.Pop() // Remove "("
-			if stack.Peek() == "*" || stack.Peek() == "+" {
-				stack.Push(temp)
-				answer := evaluate(&stack)
-				stack.Push(answer)
-			} else {
-				stack.Push(temp)
+		if c == " " {
+			continue
+		} else if c == "+" || c == "*" {
+			if !operatorStack.IsEmpty() && (operatorStack.Peek() == "+" || operatorStack.Peek() == "*") {
+				operator := operatorStack.Pop()
+				outputQueue.Push(operator)
 			}
-		} else if stack.Empty() || stack.Peek() == "(" {
-			stack.Push(c)
+			operatorStack.Push(c)
+		} else if c == "(" {
+			operatorStack.Push(c)
+		} else if c == ")" {
+			for operatorStack.Peek() != "(" {
+				operator := operatorStack.Pop()
+				outputQueue.Push(operator)
+			}
+			operatorStack.Pop() // Remove the paranthesis
 		} else {
-			stack.Push(c)
-			answer := evaluate(&stack)
-			stack.Push(answer)
+			outputQueue.Push(c)
+		}
+	}
+	for !operatorStack.IsEmpty() {
+		operator := operatorStack.Pop()
+		outputQueue.Push(operator)
+	}
+	return evaluate(&outputQueue)
+}
+
+func evaluate(queue *List) int {
+	stack := List{}
+	for !queue.IsEmpty() {
+		value := queue.Dequeue()
+		if value == "*" {
+			operand1, _ := strconv.Atoi(stack.Pop())
+			operand2, _ := strconv.Atoi(stack.Pop())
+			stack.Push(strconv.Itoa(operand1 * operand2))
+		} else if value == "+" {
+			operand1, _ := strconv.Atoi(stack.Pop())
+			operand2, _ := strconv.Atoi(stack.Pop())
+			stack.Push(strconv.Itoa(operand1 + operand2))
+		} else {
+			stack.Push(value)
 		}
 	}
 	value, _ := strconv.Atoi(stack.Pop())
 	return value
-}
-
-func evaluate(stack *Stack) string {
-	op1, _ := strconv.Atoi(stack.Pop())
-	operator := stack.Pop()
-	op2, _ := strconv.Atoi(stack.Pop())
-	switch operator {
-	case "+":
-		return strconv.Itoa(op1 + op2)
-	case "*":
-		return strconv.Itoa(op1 * op2)
-	default:
-		fmt.Println("Unknown operator:", operator)
-		return "-1"
-	}
 }
